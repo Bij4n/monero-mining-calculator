@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monero Mining Calculator</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛏</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <!-- Monero M logo -->
+        <svg class="logo-icon" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="25" cy="25" r="25" fill="#FF6600"/>
+          <path d="M10 37V18l15 15 15-15v19" fill="none" stroke="#fff" stroke-width="4.5"
+                stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+        <h1>Monero Mining Calculator</h1>
+      </div>
+      <div class="header-actions">
+        <button id="btn-refresh" class="btn btn-ghost" title="Refresh live data">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          Refresh
+        </button>
+        <button id="btn-reset" class="btn btn-ghost" title="Reset form">Reset</button>
+        <button id="btn-theme" class="btn btn-ghost" title="Toggle light/dark" aria-label="Toggle theme">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <div class="layout">
+
+      <!-- ── Left: Inputs ───────────────────────────────────────────────── -->
+      <aside class="inputs-panel">
+
+        <form id="calc-form" novalidate>
+
+          <!-- Mining Setup -->
+          <div class="card">
+            <h2 class="card-title">Mining Setup</h2>
+
+            <div class="field-group">
+              <label for="hash-rate">Hash Rate</label>
+              <div class="input-with-unit">
+                <input type="number" id="hash-rate" min="0" step="any" placeholder="0" autocomplete="off">
+                <select id="hash-unit" aria-label="Hash rate unit">
+                  <option value="1">H/s</option>
+                  <option value="1000">KH/s</option>
+                  <option value="1000000">MH/s</option>
+                  <option value="1000000000">GH/s</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="power">Power Consumption</label>
+              <div class="input-with-suffix">
+                <input type="number" id="power" min="0" step="1" placeholder="0" autocomplete="off">
+                <span class="suffix">W</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="electricity-cost">Electricity Cost</label>
+              <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="electricity-cost" min="0" step="0.001" placeholder="0.12" autocomplete="off">
+                <span class="suffix">/ kWh</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="pool-preset">Mining Pool</label>
+              <select id="pool-preset"></select>
+            </div>
+
+            <div class="field-group">
+              <label for="pool-fee">Pool Fee</label>
+              <div class="input-with-suffix">
+                <input type="number" id="pool-fee" min="0" max="100" step="0.1" placeholder="1.0" autocomplete="off">
+                <span class="suffix">%</span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="hardware-cost">
+                Hardware Cost
+                <span class="label-hint">(for ROI / break-even)</span>
+              </label>
+              <div class="input-with-prefix">
+                <span class="prefix">$</span>
+                <input type="number" id="hardware-cost" min="0" step="1" placeholder="0" autocomplete="off">
+              </div>
+            </div>
+          </div>
+
+          <!-- Network Data -->
+          <div class="card">
+            <div class="card-title-row">
+              <h2 class="card-title">Network Data</h2>
+              <span id="network-status" class="badge" data-status="loading">Loading…</span>
+            </div>
+
+            <div class="field-group">
+              <label for="xmr-price">XMR Price</label>
+              <div class="input-with-prefix-change">
+                <span class="prefix">$</span>
+                <input type="number" id="xmr-price" min="0" step="0.01" placeholder="fetching…" autocomplete="off">
+                <span id="price-change" class="price-change"></span>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="difficulty">
+                Network Difficulty
+                <span class="label-hint" id="network-hashrate-display"></span>
+              </label>
+              <input type="number" id="difficulty" min="1" step="1" placeholder="710000000000" autocomplete="off">
+            </div>
+
+            <div class="field-group">
+              <label for="block-reward">
+                Block Reward
+                <span class="label-hint">(estimated — no live source)</span>
+              </label>
+              <div class="input-with-suffix">
+                <input type="number" id="block-reward" min="0" step="0.0001" placeholder="0.6261" autocomplete="off">
+                <span class="suffix">XMR</span>
+              </div>
+            </div>
+
+            <div class="network-meta" id="last-updated">Not yet fetched</div>
+          </div>
+
+        </form>
+
+        <!-- Hardware Presets -->
+        <div class="card">
+          <h2 class="card-title">CPU Presets <span class="label-hint">(RandomX)</span></h2>
+          <div id="hardware-list" class="hardware-list"></div>
+        </div>
+
+      </aside>
+
+      <!-- ── Right: Results ─────────────────────────────────────────────── -->
+      <section class="results-panel">
+
+        <div class="summary-grid">
+          <div class="summary-card" id="card-daily-profit">
+            <div class="summary-label">Daily Profit</div>
+            <div class="summary-value" id="val-daily-profit">—</div>
+            <div class="summary-sub"  id="val-daily-xmr">—</div>
+          </div>
+          <div class="summary-card" id="card-monthly-profit">
+            <div class="summary-label">Monthly Profit</div>
+            <div class="summary-value" id="val-monthly-profit">—</div>
+            <div class="summary-sub"  id="val-monthly-xmr">—</div>
+          </div>
+          <div class="summary-card" id="card-break-even">
+            <div class="summary-label">Break-even</div>
+            <div class="summary-value" id="val-break-even">—</div>
+            <div class="summary-sub">to recover hardware cost</div>
+          </div>
+          <div class="summary-card" id="card-roi">
+            <div class="summary-label">1-Year ROI</div>
+            <div class="summary-value" id="val-roi">—</div>
+            <div class="summary-sub">return on hardware</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Profitability Breakdown</h2>
+          <div class="table-wrapper">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th>XMR Mined</th>
+                  <th>Revenue</th>
+                  <th>Electricity</th>
+                  <th>Net Profit</th>
+                </tr>
+              </thead>
+              <tbody id="results-tbody">
+                <tr class="placeholder-row">
+                  <td colspan="5">Enter your mining parameters to see results</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Mining Stats</h2>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-label">Your Network Share</div>
+              <div class="stat-value" id="stat-share">—</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Electricity Cost per XMR</div>
+              <div class="stat-value" id="stat-cost-per-xmr">—</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Power Efficiency</div>
+              <div class="stat-value" id="stat-efficiency">—</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Daily XMR (before pool fee)</div>
+              <div class="stat-value" id="stat-daily-gross">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-note">
+          <strong>About Monero:</strong>
+          RandomX is CPU-optimized and ASIC-resistant. Block time is ~2 minutes (720 blocks/day).
+          Difficulty adjusts every block. Unlike Bitcoin, Monero has permanent
+          <em>tail emission</em> — block rewards never reach zero.
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    Price data from <a href="https://www.coingecko.com" target="_blank" rel="noopener noreferrer">CoinGecko</a>.
+    Network data from <a href="https://minerstat.com" target="_blank" rel="noopener noreferrer">Minerstat</a>
+    / <a href="https://sethforprivacy.com" target="_blank" rel="noopener noreferrer">Seth's public node</a>.
+    For informational purposes only.
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/hardware.js"></script>
+  <script src="js/pools.js"></script>
+  <script src="js/calculator.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
